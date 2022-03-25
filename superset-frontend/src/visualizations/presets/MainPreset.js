@@ -167,7 +167,7 @@ export default class MainPreset extends Preset {
         new TimeColumnFilterPlugin().configure({ key: 'filter_timecolumn' }),
         new TimeGrainFilterPlugin().configure({ key: 'filter_timegrain' }),
         new EchartsTreeChartPlugin().configure({ key: 'tree_chart' }),
-        new TachyusChartTest().configure({key: 'tachyus-test-chart'}),
+        new TachyusChartTest().configure({key: 'tachyus_test_chart'}),
         ...experimentalplugins,
 
       ],
