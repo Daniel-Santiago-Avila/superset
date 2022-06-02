@@ -25,7 +25,7 @@ import { t, useTheme } from '@superset-ui/core';
 import { useSelector } from 'react-redux';
 import TableView from 'src/components/TableView';
 import Button from 'src/components/Button';
-import { fDuration } from 'src/modules/dates';
+import { fDuration } from 'src/utils/dates';
 import Icons from 'src/components/Icons';
 import { Tooltip } from 'src/components/Tooltip';
 import { Query, RootState } from 'src/SqlLab/types';
@@ -35,16 +35,18 @@ import ResultSet from '../ResultSet';
 import HighlightedSql from '../HighlightedSql';
 import { StaticPosition, verticalAlign, StyledTooltip } from './styles';
 
-interface QueryTableQuery extends Omit<Query, 'state' | 'sql' | 'progress'> {
+interface QueryTableQuery
+  extends Omit<Query, 'state' | 'sql' | 'progress' | 'results'> {
   state?: Record<string, any>;
   sql?: Record<string, any>;
   progress?: Record<string, any>;
+  results?: Record<string, any>;
 }
 
 interface QueryTableProps {
   columns?: string[];
   actions: {
-    queryEditorSetSql: Function;
+    queryEditorSetAndSaveSql: Function;
     cloneQueryToNewTab: Function;
     fetchQueryResults: Function;
     clearQueryResults: Function;
@@ -92,7 +94,7 @@ const QueryTable = ({
   const user = useSelector<RootState, User>(state => state.sqlLab.user);
 
   const {
-    queryEditorSetSql,
+    queryEditorSetAndSaveSql,
     cloneQueryToNewTab,
     fetchQueryResults,
     clearQueryResults,
@@ -101,7 +103,7 @@ const QueryTable = ({
 
   const data = useMemo(() => {
     const restoreSql = (query: Query) => {
-      queryEditorSetSql({ id: query.sqlEditorId }, query.sql);
+      queryEditorSetAndSaveSql({ id: query.sqlEditorId }, query.sql);
     };
 
     const openQueryInNewTab = (query: Query) => {
@@ -227,12 +229,12 @@ const QueryTable = ({
           </Card>
         );
         if (q.resultsKey) {
-          q.output = (
+          q.results = (
             <ModalTrigger
               className="ResultsModal"
               triggerNode={
                 <Label type="info" className="pointer">
-                  {t('View results')}
+                  {t('View')}
                 </Label>
               }
               modalTitle={t('Data preview')}
@@ -253,12 +255,9 @@ const QueryTable = ({
             />
           );
         } else {
-          // if query was run using ctas and force_ctas_schema was set
-          // tempTable will have the schema
-          const schemaUsed =
-            q.ctas && q.tempTable && q.tempTable.includes('.') ? '' : q.schema;
-          q.output = [schemaUsed, q.tempTable].filter(v => v).join('.');
+          q.results = <></>;
         }
+
         q.progress =
           state === 'success' ? (
             <ProgressBar
@@ -315,7 +314,7 @@ const QueryTable = ({
     clearQueryResults,
     cloneQueryToNewTab,
     fetchQueryResults,
-    queryEditorSetSql,
+    queryEditorSetAndSaveSql,
     removeQuery,
   ]);
 

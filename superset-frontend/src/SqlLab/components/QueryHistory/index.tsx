@@ -25,7 +25,7 @@ import QueryTable from 'src/SqlLab/components/QueryTable';
 interface QueryHistoryProps {
   queries: Query[];
   actions: {
-    queryEditorSetSql: Function;
+    queryEditorSetAndSaveSql: Function;
     cloneQueryToNewTab: Function;
     fetchQueryResults: Function;
     clearQueryResults: Function;
@@ -61,7 +61,7 @@ const QueryHistory = ({
         'progress',
         'rows',
         'sql',
-        'output',
+        'results',
         'actions',
       ]}
       queries={queries}

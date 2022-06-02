@@ -78,13 +78,9 @@ import {
   GroupByFilterPlugin,
 } from 'src/filters/components/';
 import { PivotTableChartPlugin as PivotTableChartPluginV2 } from '@superset-ui/plugin-chart-pivot-table';
+import { HandlebarsChartPlugin } from '@superset-ui/plugin-chart-handlebars';
 import FilterBoxChartPlugin from '../FilterBox/FilterBoxChartPlugin';
 import TimeTableChartPlugin from '../TimeTable';
-
-//importing custom chart
-import {TachyusChartTest} from 'tachyus-chart-test'
-
-import {LiquidChartPlugin} from 'superset-plugin-chart-liquid'
 
 export default class MainPreset extends Preset {
   constructor() {
@@ -169,10 +165,8 @@ export default class MainPreset extends Preset {
         new TimeColumnFilterPlugin().configure({ key: 'filter_timecolumn' }),
         new TimeGrainFilterPlugin().configure({ key: 'filter_timegrain' }),
         new EchartsTreeChartPlugin().configure({ key: 'tree_chart' }),
-        new TachyusChartTest().configure({key: 'tachyus_test_chart'}),
-        new LiquidChartPlugin().configure({key: 'liquid_chart'}),
+        new HandlebarsChartPlugin().configure({ key: 'handlebars' }),
         ...experimentalplugins,
-
       ],
     });
   }

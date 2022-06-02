@@ -19,7 +19,7 @@ import functools
 import logging
 import traceback
 from datetime import datetime
-from typing import Any, Callable, cast, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Any, Callable, cast, Dict, List, Optional, Union
 
 import simplejson as json
 import yaml
@@ -45,7 +45,7 @@ from flask_jwt_extended.exceptions import NoAuthorizationError
 from flask_wtf.csrf import CSRFError
 from flask_wtf.form import FlaskForm
 from pkg_resources import resource_filename
-from sqlalchemy import or_
+from sqlalchemy import exc, or_
 from sqlalchemy.orm import Query
 from werkzeug.exceptions import HTTPException
 from wtforms import Form
@@ -79,16 +79,12 @@ from superset.utils import core as utils
 
 from .utils import bootstrap_user_data
 
-if TYPE_CHECKING:
-    from superset.connectors.druid.views import DruidClusterModelView
-
 FRONTEND_CONF_KEYS = (
     "SUPERSET_WEBSERVER_TIMEOUT",
     "SUPERSET_DASHBOARD_POSITION_DATA_LIMIT",
     "SUPERSET_DASHBOARD_PERIODICAL_REFRESH_LIMIT",
     "SUPERSET_DASHBOARD_PERIODICAL_REFRESH_WARNING_MESSAGE",
     "DISABLE_DATASET_SOURCE_EDIT",
-    "DRUID_IS_ACTIVE",
     "ENABLE_JAVASCRIPT_CONTROLS",
     "DEFAULT_SQLLAB_LIMIT",
     "DEFAULT_VIZ_TYPE",
@@ -231,6 +227,9 @@ def handle_api_exception(
             return json_error_response(
                 utils.error_msg_from_exception(ex), status=cast(int, ex.code)
             )
+        except (exc.IntegrityError, exc.DatabaseError, exc.DataError) as ex:
+            logger.exception(ex)
+            return json_error_response(utils.error_msg_from_exception(ex), status=422)
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception(ex)
             return json_error_response(utils.error_msg_from_exception(ex))
@@ -621,10 +620,19 @@ class DatasourceFilter(BaseFilter):  # pylint: disable=too-few-public-methods
             return query
         datasource_perms = security_manager.user_view_menu_names("datasource_access")
         schema_perms = security_manager.user_view_menu_names("schema_access")
+        owner_ids_query = (
+            db.session.query(models.SqlaTable.id)
+            .join(models.SqlaTable.owners)
+            .filter(
+                security_manager.user_model.id
+                == security_manager.user_model.get_user_id()
+            )
+        )
         return query.filter(
             or_(
                 self.model.perm.in_(datasource_perms),
                 self.model.schema_perm.in_(schema_perms),
+                models.SqlaTable.id.in_(owner_ids_query),
             )
         )
 
